@@ -1,4 +1,4 @@
-# Worker 名称,与CF中的Worker名称必须一致
+#f Worker 名称,与CF中的Worker名称必须一致
 name = "ai-design"
 
 # 兼容性日期，确保使用最新的 Workers 运行时功能
