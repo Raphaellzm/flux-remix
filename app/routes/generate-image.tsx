@@ -1,60 +1,4 @@
-import type { FC, ChangeEvent, FormEvent } from "react";
-import { useState } from "react";
-import { json } from "@remix-run/cloudflare";
-import { useActionData, Form, useNavigation, useLoaderData } from "@remix-run/react";
-import type { ActionFunction, LoaderFunction } from "@remix-run/cloudflare";
-import { createAppContext } from "../context";
-
-export const loader: LoaderFunction = async ({ context }) => {
-  const appContext = createAppContext(context);
-  const { config } = appContext;
-  const models = Object.entries(config.CUSTOMER_MODEL_MAP).map(([id, path]) => ({ id, path }));
-  return json({ models, config });
-};
-
-export const action: ActionFunction = async ({ request, context }: { request: Request; context: any }) => {
-  const appContext = createAppContext(context);
-  const { imageGenerationService, config } = appContext;
-
-  console.log("Generate image action started");
-  console.log("Config:", JSON.stringify(config, null, 2));
-
-  const formData = await request.formData();
-  const prompt = formData.get("prompt") as string;
-  const enhance = formData.get("enhance") === "true";
-  const modelId = formData.get("model") as string;
-  const size = formData.get("size") as string;
-  const numSteps = parseInt(formData.get("numSteps") as string, 10);
-
-  console.log("Form data:", { prompt, enhance, modelId, size, numSteps });
-
-  if (!prompt) {
-    return json({ error: "未找到提示词" }, { status: 400 });
-  }
-
-  const model = config.CUSTOMER_MODEL_MAP[modelId];
-  if (!model) {
-    return json({ error: "无效的模型" }, { status: 400 });
-  }
-
-  try {
-    const result = await imageGenerationService.generateImage(
-      enhance ? `---tl ${prompt}` : prompt,
-      model,
-      size,
-      numSteps
-    );
-    console.log("Image generation successful");
-    return json(result);
-  } catch (error) {
-    console.error("生成图片时出错:", error);
-    if (error instanceof AppError) {
-      return json({ error: `生成图片失败: ${error.message}` }, { status: error.status || 500 });
-    }
-    return json({ error: "生成图片失败: 未知错误" }, { status: 500 });
-  }
-};
-
+// flux-remix/app/routes/generate-image.tsx
 const GenerateImage: FC = () => {
   const { models, config } = useLoaderData<typeof loader>();
   const [prompt, setPrompt] = useState("");
@@ -97,7 +41,7 @@ const GenerateImage: FC = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-purple-600 via-pink-500 to-red-500 px-4">
       <div className="relative bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-3xl shadow-2xl p-10 max-w-md w-full">
         <h1 className="text-4xl font-extrabold text-white mb-8 text-center drop-shadow-lg">
-          白嫖 CF 的 Flux 生成图片
+         Flux 生成图片demo
         </h1>
         <Form method="post" className="space-y-8" onSubmit={handleSubmit}>
           <div>
@@ -127,7 +71,11 @@ const GenerateImage: FC = () => {
               className="w-full px-5 py-3 rounded-xl border border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white bg-opacity-20 text-white transition duration-300 ease-in-out hover:bg-opacity-30"
             >
               {models.map((model) => (
-                <option key={model.id} value={model.id}>
+                <option
+                  key={model.id}
+                  value={model.id}
+                  className="bg-gray-800 text-white hover:bg-gray-700" // 添加自定义样式
+                >
                   {model.id}
                 </option>
               ))}
